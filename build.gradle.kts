@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 val grpcKotlinVersion: String by project
 val grpcVersion: String by project
 val protobufVersion: String by project
+val kotlinXVersion: String by project
 
 plugins {
     kotlin("jvm") version "1.7.20"
@@ -21,6 +22,8 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinXVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinXVersion")
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")

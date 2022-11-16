@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "org.ale.pallotta.lamport";
+option java_outer_classname = "LamportProto";
+
+service Lamport {
+  rpc Send (Message) returns (google.protobuf.Empty) {}
+}
+
+message Message {
+  int32 time = 1;
+  string body = 2;
+}
