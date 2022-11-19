@@ -11,15 +11,11 @@ import org.ale.pallotta.mutex.Type
 import java.lang.Integer.max
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import org.ale.pallota.distributed.systems.algorithms.buildServer
 
 class MutexCoordinatorService(port: Int, private val userStubs: Map<Int, MutexGrpcKt.MutexCoroutineStub>) : MutexGrpcKt.MutexCoroutineImplBase() {
 
-  private val server = ServerBuilder
-    .forPort(port)
-    .addService(this)
-    .build()
-    .also { it.start() }
-    .addShutdownHook()
+  private val server = buildServer(port, this)
 
   private val queue = mutableListOf<Int>()
   private val reserved = AtomicBoolean(false)
@@ -52,7 +48,7 @@ class MutexCoordinatorService(port: Int, private val userStubs: Map<Int, MutexGr
     return Empty.getDefaultInstance()
   }
 
-  suspend fun coordinatorRoutine() {
+  fun coordinatorRoutine() {
     server.awaitTermination()
   }
 }
