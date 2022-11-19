@@ -2,15 +2,6 @@ version: "3.8"
 
 services:
 
-  app-9000:
-    image: distributed-systems-algorithm
-    container_name: app-9000
-    ports:
-      - "9000:9000"
-    environment:
-      PORT: "9000"
-      ALGORITHM: $ALGORITHM
-
   app-9001:
     image: distributed-systems-algorithm
     container_name: app-9001
@@ -45,4 +36,13 @@ services:
       - "9004:9004"
     environment:
       PORT: "9004"
+      ALGORITHM: $ALGORITHM
+
+  app-9005:
+    image: distributed-systems-algorithm
+    container_name: app-9005
+    ports:
+      - "9005:9005"
+    environment:
+      PORT: "9005"
       ALGORITHM: $ALGORITHM

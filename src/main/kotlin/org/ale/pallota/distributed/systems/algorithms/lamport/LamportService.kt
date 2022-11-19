@@ -8,8 +8,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class LamportService(private val localTime: AtomicInteger) : LamportGrpcKt.LamportCoroutineImplBase() {
   override suspend fun send(request: Message): Empty {
-    localTime.set(max(request.time, localTime.get()) + 1)
-    println("[${localTime.get()}] Received message: ${request.body}")
+    val updatedTime = max(request.time, localTime.get()) + 1
+    localTime.set(updatedTime)
+
+    println("[$updatedTime] Received message: ${request.body}")
+
     return Empty.getDefaultInstance()
   }
 }
