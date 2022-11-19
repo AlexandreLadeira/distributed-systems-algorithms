@@ -9,6 +9,7 @@ val kotlinXVersion: String by project
 plugins {
     kotlin("jvm") version "1.7.20"
     id("com.google.protobuf") version "0.9.1"
+    id("com.google.cloud.tools.jib") version "3.3.1"
 }
 
 group = "org.ale.pallotta"
@@ -61,5 +62,15 @@ protobuf {
                 id("kotlin")
             }
         }
+    }
+}
+
+jib {
+    to {
+        image = "distributed-systems-algorithm"
+    }
+
+    container {
+        ports = listOf("9000", "9001", "9002", "9003", "9004")
     }
 }

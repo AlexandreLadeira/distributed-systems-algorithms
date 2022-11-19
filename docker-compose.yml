@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+
+  app-9000:
+    image: distributed-systems-algorithm
+    container_name: app-9000
+    ports:
+      - "9000:9000"
+    environment:
+      PORT: "9000"
+      ALGORITHM: $ALGORITHM
+
+  app-9001:
+    image: distributed-systems-algorithm
+    container_name: app-9001
+    ports:
+      - "9001:9001"
+    environment:
+      PORT: "9001"
+      ALGORITHM: $ALGORITHM
+
+  app-9002:
+    image: distributed-systems-algorithm
+    container_name: app-9002
+    ports:
+      - "9002:9002"
+    environment:
+      PORT: "9002"
+      ALGORITHM: $ALGORITHM
+
+  app-9003:
+    image: distributed-systems-algorithm
+    container_name: app-9003
+    ports:
+      - "9003:9003"
+    environment:
+      PORT: "9003"
+      ALGORITHM: $ALGORITHM
+
+  app-9004:
+    image: distributed-systems-algorithm
+    container_name: app-9004
+    ports:
+      - "9004:9004"
+    environment:
+      PORT: "9004"
+      ALGORITHM: $ALGORITHM
