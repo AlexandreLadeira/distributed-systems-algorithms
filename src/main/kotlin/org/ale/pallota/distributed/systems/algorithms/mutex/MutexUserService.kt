@@ -1,31 +1,20 @@
 package org.ale.pallota.distributed.systems.algorithms.mutex
 
 import com.google.protobuf.Empty
-import io.grpc.ServerBuilder
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.random.Random
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.yield
-import org.ale.pallota.distributed.systems.algorithms.addShutdownHook
-import org.ale.pallotta.mutex.MutexGrpc.MutexStub
+import org.ale.pallota.distributed.systems.algorithms.buildServer
 import org.ale.pallotta.mutex.MutexGrpcKt
 import org.ale.pallotta.mutex.MutexMessage
 import org.ale.pallotta.mutex.Type
-import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.random.Random
 
-class MutexUserService(private val port: Int, private val coordinatorStub: MutexGrpcKt.MutexCoroutineStub) : MutexGrpcKt.MutexCoroutineImplBase() {
+class MutexUserService(private val port: Int, private val coordinatorStub: MutexGrpcKt.MutexCoroutineStub) :
+  MutexGrpcKt.MutexCoroutineImplBase() {
 
-  private val server = ServerBuilder
-    .forPort(port)
-    .addService(this)
-    .build()
-    .also { it.start() }
-    .addShutdownHook()
+  private val server = buildServer(port, this)
 
-  private val waitingForRequest = AtomicBoolean(false)
+  private val waitingForResource = AtomicBoolean(false)
 
   override suspend fun send(request: MutexMessage): Empty {
     require(request.type == Type.OK)
@@ -33,11 +22,10 @@ class MutexUserService(private val port: Int, private val coordinatorStub: Mutex
     // Use resource for some time
     delay(Random.nextLong(2000, 8000))
 
-    val message = MutexMessage.newBuilder().setType(Type.RELEASE).setId(port).build()
     println("Releasing resource")
-    coordinatorStub.send(message)
+    coordinatorStub.send(createMutexMessage(Type.RELEASE, port))
 
-    waitingForRequest.set(false)
+    waitingForResource.set(false)
 
     return Empty.getDefaultInstance()
   }
@@ -45,14 +33,18 @@ class MutexUserService(private val port: Int, private val coordinatorStub: Mutex
   suspend fun userRoutine() {
     while (!server.isTerminated) {
       delay(Random.nextLong(4000, 6000))
-      val message = MutexMessage.newBuilder().setType(Type.REQUEST).setId(port).build()
-      println("Requesting resource")
-      coordinatorStub.send(message)
 
-      waitingForRequest.set(true)
-      while (waitingForRequest.get()) {
-        delay(200)
-      }
+      println("Requesting resource")
+      coordinatorStub.send(createMutexMessage(Type.REQUEST, port))
+
+      waitForResource()
+    }
+  }
+
+  private suspend fun waitForResource() {
+    waitingForResource.set(true)
+    while (waitingForResource.get()) {
+      delay(200)
     }
   }
 }
