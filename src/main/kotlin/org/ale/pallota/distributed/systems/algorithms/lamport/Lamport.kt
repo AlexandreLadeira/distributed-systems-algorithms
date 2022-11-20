@@ -12,20 +12,20 @@ import org.ale.pallota.distributed.systems.algorithms.buildServer
 import org.ale.pallotta.lamport.LamportGrpcKt
 
 suspend fun lamport(serverPort: Int, channels: List<ManagedChannel>) {
-    val localTime = AtomicInteger()
-    val stubs = channels.map { LamportGrpcKt.LamportCoroutineStub(it) }
-    val server = buildServer(serverPort, LamportService(localTime))
+  val localTime = AtomicInteger()
+  val stubs = channels.map { LamportGrpcKt.LamportCoroutineStub(it) }
+  val server = buildServer(serverPort, LamportService(localTime))
 
-    delay(3000)
+  delay(3000)
 
-    while (!server.isTerminated) {
-        val time = localTime.incrementAndGet()
-        val message = Message.newBuilder()
-            .setTime(time)
-            .setBody(UUID.randomUUID().toString().substringBefore("-"))
-            .build()
-        println("[${time}] Sending message: ${message.body}")
-        stubs.random().send(message)
-        delay(Random.nextLong(100, 2000))
-    }
+  while (!server.isTerminated) {
+    val time = localTime.incrementAndGet()
+    val message = Message.newBuilder()
+      .setTime(time)
+      .setBody(UUID.randomUUID().toString().substringBefore("-"))
+      .build()
+    println("[${time}] Sending message: ${message.body}")
+    stubs.random().send(message)
+    delay(Random.nextLong(100, 2000))
+  }
 }

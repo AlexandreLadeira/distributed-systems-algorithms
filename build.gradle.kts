@@ -5,6 +5,7 @@ val grpcKotlinVersion: String by project
 val grpcVersion: String by project
 val protobufVersion: String by project
 val kotlinXVersion: String by project
+val logbackVersion: String by project
 
 plugins {
     kotlin("jvm") version "1.7.20"
@@ -28,6 +29,7 @@ dependencies {
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
     runtimeOnly("io.grpc:grpc-netty:$grpcVersion")
 }

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "org.ale.pallotta.election";
+option java_outer_classname = "ElectionProto";
+
+service Election {
+  rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
