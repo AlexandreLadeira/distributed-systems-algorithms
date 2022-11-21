@@ -5,12 +5,17 @@ import org.ale.pallota.distributed.systems.algorithms.election.election
 import org.ale.pallota.distributed.systems.algorithms.lamport.lamport
 import org.ale.pallota.distributed.systems.algorithms.mutex.mutex
 import java.util.concurrent.TimeUnit
+import java.util.logging.LogManager
+import java.util.logging.Logger
 
 enum class Algorithm {
   LAMPORT, MUTEX, ELECTION
 }
 
 suspend fun main() {
+  // Disables unnecessary logs
+  LogManager.getLogManager().reset()
+
   val port = System.getenv("PORT")?.toInt() ?: error("Port must not be null")
 
   val ports = listOf(9001, 9002, 9003, 9004, 9005)
@@ -19,7 +24,7 @@ suspend fun main() {
       ManagedChannelBuilder.forAddress(
         "app-$it",
         it
-      ).keepAliveTimeout(2, TimeUnit.SECONDS).usePlaintext().build()
+      ).usePlaintext().build()
     }
 
   when (Algorithm.valueOf(System.getenv("ALGORITHM"))) {
