@@ -7,5 +7,20 @@ option java_package = "org.ale.pallotta.election";
 option java_outer_classname = "ElectionProto";
 
 service Election {
-  rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Send(ElectionMessage) returns(google.protobuf.Empty) {}
+}
+
+enum ElectionMessageType {
+  PING = 0;
+  ELECTION = 1;
+  NEW_LEADER = 2;
+}
+
+message ElectionMessage {
+  ElectionMessageType type = 1;
+  int32 id = 2;
+}
+
+message Leader {
+  int32 id = 1;
 }
