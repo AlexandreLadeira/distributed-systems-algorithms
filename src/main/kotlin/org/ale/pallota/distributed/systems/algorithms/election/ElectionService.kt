@@ -13,31 +13,30 @@ import java.util.concurrent.atomic.AtomicReference
 
 class ElectionService(
   private val port: Int,
-  private val userStubs: Map<Int, ElectionGrpcKt.ElectionCoroutineStub>
+  private val peerStubs: Map<Int, ElectionGrpcKt.ElectionCoroutineStub>
 ) : ElectionGrpcKt.ElectionCoroutineImplBase() {
 
   private val server = buildServer(port, this)
+
   private val leader: AtomicReference<ElectionGrpcKt.ElectionCoroutineStub> = AtomicReference()
   private val isElectionScheduled = AtomicBoolean(false)
 
   override suspend fun send(request: ElectionMessage): Empty =
     when (request.type) {
-      ElectionMessageType.PING -> Empty.getDefaultInstance()
+      ElectionMessageType.PING -> {}
       ElectionMessageType.ELECTION -> scheduleElection()
       ElectionMessageType.NEW_LEADER -> updateLeader(request.id)
       else -> error("Unrecognized request type")
-    }
+    }.let { Empty.getDefaultInstance() }
 
-  private fun scheduleElection(): Empty {
+  private fun scheduleElection() {
     isElectionScheduled.set(true)
-    return Empty.getDefaultInstance()
   }
 
-  private fun updateLeader(newLeader: Int): Empty {
+  private fun updateLeader(newLeader: Int) {
     println("Received leader update, new leader is $newLeader")
-    leader.set(userStubs[newLeader]!!)
+    leader.set(peerStubs[newLeader]!!)
     isElectionScheduled.set(false)
-    return Empty.getDefaultInstance()
   }
 
   suspend fun routine() {
@@ -55,7 +54,7 @@ class ElectionService(
   }
 
   private suspend fun runElection() {
-    val newLeader = userStubs.filterKeys { it > port }
+    val newLeader = peerStubs.filterKeys { it > port }
       .mapNotNull { entry ->
         sendElection(entry.value).getOrNull()?.let { entry }
       }
@@ -79,11 +78,14 @@ class ElectionService(
     sendMessage(stub, createElectionMessage(ElectionMessageType.ELECTION))
 
   private suspend fun sendUpdateLeaderToAllUsers() =
-    userStubs.values.forEach {
+    peerStubs.values.forEach {
       sendMessage(it, createElectionMessage(ElectionMessageType.NEW_LEADER, port))
     }
 
-  private suspend fun sendMessage(stub: ElectionGrpcKt.ElectionCoroutineStub, request: ElectionMessage) =
+  private suspend fun sendMessage(
+    stub: ElectionGrpcKt.ElectionCoroutineStub,
+    request: ElectionMessage
+  ) =
     runCatching {
       (stub.channel as ManagedChannel).resetConnectBackoff()
       stub.withDeadlineAfter(5, TimeUnit.SECONDS)
