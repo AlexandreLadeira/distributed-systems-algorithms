@@ -20,7 +20,3 @@ message ElectionMessage {
   ElectionMessageType type = 1;
   int32 id = 2;
 }
-
-message Leader {
-  int32 id = 1;
-}
