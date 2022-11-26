@@ -1,6 +1,7 @@
 package org.ale.pallota.distributed.systems.algorithms.election
 
 import com.google.protobuf.Empty
+import io.grpc.ConnectivityState
 import io.grpc.ManagedChannel
 import kotlinx.coroutines.delay
 import org.ale.pallota.distributed.systems.algorithms.buildServer
@@ -19,7 +20,7 @@ class ElectionService(
   private val server = buildServer(port, this)
 
   private val leader: AtomicReference<ElectionGrpcKt.ElectionCoroutineStub> = AtomicReference()
-  private val isElectionScheduled = AtomicBoolean(false)
+  private val isElectionScheduled = AtomicBoolean(true)
 
   override suspend fun send(request: ElectionMessage): Empty =
     when (request.type) {
@@ -40,13 +41,12 @@ class ElectionService(
   }
 
   suspend fun routine() {
-    runElection()
-
     while (!server.isTerminated) {
       pingLeader()?.onFailure { scheduleElection() }
 
       if (isElectionScheduled.get()) {
         runElection()
+        isElectionScheduled.set(false)
       }
 
       delay(1000)
@@ -54,19 +54,16 @@ class ElectionService(
   }
 
   private suspend fun runElection() {
-    val newLeader = peerStubs.filterKeys { it > port }
+    val responses = peerStubs.filterKeys { it > port }
       .mapNotNull { entry ->
         sendElection(entry.value).getOrNull()?.let { entry }
       }
-      .maxByOrNull { it.key }
 
-    if (newLeader == null) {
+    if (responses.isEmpty()) {
       println("I am the new leader ($port)")
       sendUpdateLeaderToAllUsers()
       leader.set(null)
     }
-
-    isElectionScheduled.set(false)
   }
 
   private suspend fun pingLeader() = leader.get()?.let { sendPing(it) }
@@ -87,6 +84,7 @@ class ElectionService(
     request: ElectionMessage
   ) =
     runCatching {
+
       (stub.channel as ManagedChannel).resetConnectBackoff()
       stub.withDeadlineAfter(5, TimeUnit.SECONDS)
         .send(request)
