@@ -3,6 +3,7 @@ package org.ale.pallota.distributed.systems.algorithms.election
 import com.google.protobuf.Empty
 import io.grpc.ConnectivityState
 import io.grpc.ManagedChannel
+import io.grpc.Server
 import kotlinx.coroutines.delay
 import org.ale.pallota.distributed.systems.algorithms.buildServer
 import org.ale.pallotta.election.ElectionGrpcKt
@@ -16,8 +17,6 @@ class ElectionService(
   private val port: Int,
   private val peerStubs: Map<Int, ElectionGrpcKt.ElectionCoroutineStub>
 ) : ElectionGrpcKt.ElectionCoroutineImplBase() {
-
-  private val server = buildServer(port, this)
 
   private val leader: AtomicReference<ElectionGrpcKt.ElectionCoroutineStub> = AtomicReference()
   private val isElectionScheduled = AtomicBoolean(true)
@@ -37,10 +36,14 @@ class ElectionService(
   private fun updateLeader(newLeader: Int) {
     println("Received leader update, new leader is $newLeader")
     leader.set(peerStubs[newLeader]!!)
-    isElectionScheduled.set(false)
   }
 
   suspend fun routine() {
+    delay(10000)
+
+    println("Starting server...")
+    val server = buildServer(port, this)
+
     while (!server.isTerminated) {
       pingLeader()?.onFailure { scheduleElection() }
 
@@ -84,9 +87,7 @@ class ElectionService(
     request: ElectionMessage
   ) =
     runCatching {
-
       (stub.channel as ManagedChannel).resetConnectBackoff()
-      stub.withDeadlineAfter(5, TimeUnit.SECONDS)
-        .send(request)
+      stub.withDeadlineAfter(2, TimeUnit.SECONDS).send(request)
     }
 }
