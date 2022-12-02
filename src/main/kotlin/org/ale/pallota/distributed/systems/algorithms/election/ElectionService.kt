@@ -58,9 +58,7 @@ class ElectionService(
 
   private suspend fun runElection() {
     val responses = peerStubs.filterKeys { it > port }
-      .mapNotNull { entry ->
-        sendElection(entry.value).getOrNull()?.let { entry }
-      }
+      .mapNotNull { sendElection(it.value).getOrNull() }
 
     if (responses.isEmpty()) {
       println("I am the new leader ($port)")
